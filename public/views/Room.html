@@ -28,16 +28,12 @@
 
         <!-- https://ogp.me -->
 
-        <meta id="ogType" property="og:type" content="app-webrtc" />
-        <meta id="ogSiteName" property="og:site_name" content="MiroTalk SFU" />
-        <meta id="ogTitle" property="og:title" content="Click the link to make a call." />
-        <meta
-            id="ogDescription"
-            property="og:description"
-            content="MiroTalk SFU calling provides real-time video calls, messaging and screen sharing."
-        />
-        <meta id="ogImage" property="og:image" content="https://sfu.mirotalk.com/images/mirotalksfu.png" />
-        <meta id="ogUrl" property="og:url" content="https://sfu.mirotalk.com" />
+        <meta property="og:type" content="{{OG_TYPE}}" />
+        <meta property="og:site_name" content="{{OG_SITE_NAME}}" />
+        <meta property="og:title" content="{{OG_TITLE}}" />
+        <meta property="og:description" content="{{OG_DESCRIPTION}}" />
+        <meta property="og:image" content="{{OG_IMAGE}}" />
+        <meta property="og:url" content="{{OG_URL}}" />
 
         <!-- StyleSheet -->
         <link rel="stylesheet" href="../css/Root.css" />
@@ -81,8 +77,6 @@
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" />
 
-        <script defer src="../js/Brand.js"></script>
-
         <!-- Modern or es5 bundle -->
         <script defer src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.es5.min.js"></script>
@@ -110,6 +104,7 @@
         <script defer src="https://cdn.jsdelivr.net/npm/ua-parser-js@latest/dist/ua-parser.min.js"></script>
 
         <script async src="../js/Umami.js"></script>
+        <script defer src="../js/Brand.js"></script>
         <script async src="../js/Translate.js"></script>
 
         <!-- Js scripts https://cdn.jsdelivr.net -->
@@ -123,6 +118,7 @@
         <script defer src="../js/SpeechRec.js"></script>
         <script defer src="../js/Transcription.js"></script>
         <script defer src="../js/VideoGrid.js"></script>
+        <script defer src="../js/VirtualBackground.js"></script>
         <script defer src="../js/RoomClient.js"></script>
         <script defer src="../js/Room.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -130,8 +126,6 @@
         <script defer src="https://cdn.jsdelivr.net/npm/fabric@5.3.0-browser/dist/fabric.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.8"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
-        <!-- <script defer src="https://unpkg.com/@popperjs/core@2"></script>
-        <script defer src="https://unpkg.com/tippy.js@6"></script> -->
         <script defer src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
         <script defer src="https://cdnjs.cloudflare.com/ajax/libs/tippy.js/6.3.7/tippy-bundle.umd.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -139,6 +133,8 @@
         <script defer src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
         <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/gifler@0.1.0/gifler.min.js"></script>
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -154,7 +150,6 @@ access to use this app.
 
         <section>
             <div id="initUser" class="init-user hidden">
-                <!-- <p>Please allow the camera & microphone access to use this app.</p> -->
                 <div id="initVideoContainer" class="init-video-container">
                     <video
                         id="initVideo"
@@ -163,15 +158,18 @@ access to use this app.
                         class="mirror"
                         poster="../images/loader.gif"
                     ></video>
+                    <div id="imageGrid" class="image-grid fadein"></div>
+                    <span id="initErrorMessage" class="show-error"></span>
                 </div>
                 <div class="initComands">
                     <button id="initVideoAudioRefreshButton" class="fas fa-rotate"></button>
+                    <button id="initAudioVideoButton" class="fas fa-eye"></button>
                     <button id="initVideoButton" class="fas fa-video"></button>
                     <button id="initAudioButton" class="fas fa-microphone"></button>
-                    <button id="initAudioVideoButton" class="fas fa-eye"></button>
                     <button id="initStartScreenButton" class="fas fa-desktop hidden"></button>
                     <button id="initStopScreenButton" class="fas fa-stop-circle hidden"></button>
                     <button id="initVideoMirrorButton" class="fas fa-arrow-right-arrow-left"></button>
+                    <button id="initVirtualBackgroundButton" class="fa-solid fa-image hidden"></button>
                     <button id="initUsernameEmojiButton" class="fas fa-smile"></button>
                     <select id="initVideoSelect" class="form-select text-light bg-dark"></select>
                     <select id="initMicrophoneSelect" class="form-select text-light bg-dark"></select>
@@ -179,7 +177,29 @@ access to use this app.
                 </div>
             </div>
             <div id="usernameEmoji" class="usernameEmoji fadein center hidden"></div>
+            <div id="initImageUrlModal" class="imageUrlModal">
+                <div class="imageUrlModal-content fadein">
+                    <h2>Paste Image URL</h2>
+                    <input type="text" id="initImageUrlInput" placeholder="Enter the image URL here..." />
+                    <button id="initSaveImageUrlBtn">Save</button>
+                    <button id="initCancelImageUrlBtn">Cancel</button>
+                </div>
+            </div>
         </section>
+
+        <div id="imageUrlModal" class="imageUrlModal">
+            <div class="imageUrlModal-content fadein">
+                <h2>Paste Image URL</h2>
+                <input type="text" id="imageUrlInput" placeholder="Enter the image URL here..." />
+                <button id="saveImageUrlBtn">Save</button>
+                <button id="cancelImageUrlBtn">Cancel</button>
+            </div>
+        </div>
+
+        <div id="qrRoomPopupContainer" class="hidden top-center fadein">
+            <canvas id="qrRoomPopup"></canvas>
+            <div id="qrText">Scan to join the room</div>
+        </div>
 
         <div id="control" class="fadein">
             <button id="shareButton" class="hidden"><i class="fas fa-share-alt"></i></button>
@@ -290,7 +310,7 @@ access to use this app.
                         <hr />
                         <table class="settingsTable">
                             <tr id="broadcastingButton" class="hidden">
-                                <td class="custom-width">
+                                <td>
                                     <div class="title">
                                         <i class="fa-solid fa-wifi"></i>
                                         <p>Broadcast</p>
@@ -303,7 +323,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="lobbyButton" class="hidden">
-                                <td class="custom-width">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-shield-halved"></i>
                                         <p>Lobby</p>
@@ -316,7 +336,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="pitchBarButton">
-                                <td class="custom-width">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-microphone-lines"></i>
                                         <p>Volume bar</p>
@@ -329,7 +349,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="soundsButton">
-                                <td class="custom-width">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-music"></i>
                                         <p>Sounds</p>
@@ -342,7 +362,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="shareOnJoinButton">
-                                <td class="custom-width">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-share-alt"></i>
                                         <p>Share</p>
@@ -355,7 +375,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="keepButtonsVisibleButton">
-                                <td class="custom-width">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-eye"></i>
                                         <p>Buttons</p>
@@ -377,6 +397,7 @@ access to use this app.
                                         <p id="roomId" class="cp">xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</p>
                                     </div>
                                 </td>
+                                <td></td>
                             </tr>
                             <tr>
                                 <td>
@@ -385,6 +406,7 @@ access to use this app.
                                         <p id="sessionTime">00:00:00</p>
                                     </div>
                                 </td>
+                                <td></td>
                             </tr>
                         </table>
                     </div>
@@ -401,6 +423,15 @@ access to use this app.
                         </div>
                         <select id="videoSelect" class="form-select text-light bg-dark"></select>
                         <br />
+                        <div id="videoVirtualBackground" class="hidden">
+                            <div class="title">
+                                <i class="fa-solid fa-image"></i>
+                                <p>Virtual background:</p>
+                            </div>
+                            <div id="imageGridVideo" class="image-grid"></div>
+                            <span id="errorMessage" class="show-error"></span>
+                            <br />
+                        </div>
                         <div class="title">
                             <i class="fas fa-palette"></i>
                             <p>Video Quality:</p>
@@ -430,6 +461,18 @@ access to use this app.
                                 <option value="4k">🖥&nbsp;4K</option>
                                 <option value="6k">🖥&nbsp;6k</option>
                                 <option value="8k">🖥&nbsp;8K</option>
+                            </select>
+                        </div>
+                        <br />
+                        <div id="ScreenOptimizationDiv" class="hidden">
+                            <div class="title">
+                                <i class="fa-solid fa-rocket"></i>
+                                <p id="screenOptimizationLabel">Screen Optimization:</p>
+                            </div>
+                            <select id="screenOptimization" class="form-select text-light bg-dark">
+                                <option value="default">🖥&nbsp;None</option>
+                                <option value="detail">🖥&nbsp;Detail</option>
+                                <option value="motion">🖥&nbsp;Motion</option>
                             </select>
                         </div>
                         <hr />
@@ -502,9 +545,9 @@ access to use this app.
                                 <!-- onclick="event.stopPropagation()" -->
                                 <table class="settingsTable">
                                     <tr id="autoGainControlButton">
-                                        <td class="microphone-table-width">
+                                        <td>
                                             <div class="title">
-                                                <!-- <i class="fas fa-ear-listen"></i> -->
+                                                <i class="fas fa-ear-listen"></i>
                                                 <p>Auto gain control</p>
                                             </div>
                                         </td>
@@ -519,9 +562,9 @@ access to use this app.
                                         </td>
                                     </tr>
                                     <tr id="echoCancellationButton">
-                                        <td class="microphone-table-width">
+                                        <td>
                                             <div class="title">
-                                                <!-- <i class="fas fa-ear-listen"></i> -->
+                                                <i class="fas fa-ear-listen"></i>
                                                 <p>Echo cancellation</p>
                                             </div>
                                         </td>
@@ -537,9 +580,9 @@ access to use this app.
                                         </td>
                                     </tr>
                                     <tr id="noiseSuppressionButton">
-                                        <td class="microphone-table-width">
+                                        <td>
                                             <div class="title">
-                                                <!-- <i class="fas fa-ear-listen"></i> -->
+                                                <i class="fas fa-ear-listen"></i>
                                                 <p>Noise suppression</p>
                                             </div>
                                         </td>
@@ -555,9 +598,9 @@ access to use this app.
                                         </td>
                                     </tr>
                                     <tr id="sampleRateButton">
-                                        <td class="microphone-table-width">
+                                        <td>
                                             <div class="title">
-                                                <!-- <i class="fas fa-microphone-lines"></i> -->
+                                                <i class="fas fa-microphone-lines"></i>
                                                 <p>Sample rate</p>
                                             </div>
                                         </td>
@@ -572,9 +615,9 @@ access to use this app.
                                         </td>
                                     </tr>
                                     <tr id="sampleSizeButton">
-                                        <td class="microphone-table-width">
+                                        <td>
                                             <div class="title">
-                                                <!-- <i class="fas fa-microphone-lines"></i> -->
+                                                <i class="fas fa-microphone-lines"></i>
                                                 <p>Sample size</p>
                                             </div>
                                         </td>
@@ -589,9 +632,9 @@ access to use this app.
                                         </td>
                                     </tr>
                                     <tr id="channelCountButton">
-                                        <td class="microphone-table-width">
+                                        <td>
                                             <div class="title">
-                                                <!-- <i class="fas fa-microphone-lines"></i> -->
+                                                <i class="fas fa-microphone-lines"></i>
                                                 <p>Channel count</p>
                                             </div>
                                         </td>
@@ -606,9 +649,9 @@ access to use this app.
                                         </td>
                                     </tr>
                                     <tr id="micLatencyButton">
-                                        <td class="microphone-table-width">
+                                        <td>
                                             <div class="title">
-                                                <!-- <i class="fab fa-audible"></i> -->
+                                                <i class="fab fa-audible"></i>
                                                 <p>Latency</p>
                                             </div>
                                         </td>
@@ -629,9 +672,9 @@ access to use this app.
                                         </td>
                                     </tr>
                                     <tr id="micVolumeButton">
-                                        <td class="microphone-table-width">
+                                        <td>
                                             <div class="title">
-                                                <!-- <i class="fas fa-volume-high"></i> -->
+                                                <i class="fas fa-volume-high"></i>
                                                 <p>Volume</p>
                                             </div>
                                         </td>
@@ -651,8 +694,15 @@ access to use this app.
                                             </div>
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <td>
+                                            <button id="applyAudioOptionsButton" class="fas fa-check">
+                                                <p>Apply options</p>
+                                            </button>
+                                        </td>
+                                        <td></td>
+                                    </tr>
                                 </table>
-                                <button id="applyAudioOptionsButton" class="fas fa-check"><p>Apply options</p></button>
                             </div>
                         </div>
                         <div id="speakerSelectDiv">
@@ -672,7 +722,7 @@ access to use this app.
                             <hr />
                             <table class="settingsTable">
                                 <tr>
-                                    <td class="width-150">
+                                    <td>
                                         <div class="title">
                                             <i class="fa-solid fa-hand-pointer"></i>
                                             <p>Push to talk</p>
@@ -695,7 +745,7 @@ access to use this app.
                         <hr />
                         <table class="settingsTable">
                             <tr id="everyonePrivacyBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-circle-user"></i>
                                         <p>Start in Privacy Mode</p>
@@ -713,7 +763,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="everyoneMuteBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-microphone-slash"></i>
                                         <p>Join Muted</p>
@@ -726,7 +776,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="everyoneHideBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-video-slash"></i>
                                         <p>Join Hidden</p>
@@ -744,12 +794,11 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="2">
-                                    <hr />
-                                </td>
+                                <td></td>
+                                <td></td>
                             </tr>
                             <tr id="everyoneCantUnmuteBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-microphone red"></i>
                                         <p>Restrict Self-Unmute</p>
@@ -767,7 +816,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="everyoneCantUnhideBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-video red"></i>
                                         <p>Restrict Self-Unhide</p>
@@ -785,7 +834,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="everyoneCantShareScreenBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-display red"></i>
                                         <p>Disable Screen Sharing</p>
@@ -803,7 +852,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="everyoneCantChatPrivatelyBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fa-solid fa-comments red"></i>
                                         <p>Disable Private Chat</p>
@@ -821,7 +870,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="everyoneCantChatGPTBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fa-solid fa-robot red"></i>
                                         <p>Disable ChatGPT Access</p>
@@ -839,7 +888,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="everyoneCantChatGPTBtn">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fab fa-youtube red"></i>
                                         <p>Disable Media Sharing</p>
@@ -857,7 +906,7 @@ access to use this app.
                                 </td>
                             </tr>
                             <tr id="disconnectAllOnLeave">
-                                <td class="wa">
+                                <td>
                                     <div class="title">
                                         <i class="fas fa-users-slash red"></i>
                                         <p>Disconnect all on Exit</p>
@@ -882,7 +931,7 @@ access to use this app.
                             <hr />
                             <table class="settingsTable">
                                 <tr>
-                                    <td class="width-180">
+                                    <td>
                                         <div class="title">
                                             <i class="fa-solid fa-film"></i>
                                             <p>Prioritize H.264</p>
@@ -895,7 +944,7 @@ access to use this app.
                                     </td>
                                 </tr>
                                 <tr id="roomHostOnlyRecording" class="hidden">
-                                    <td class="width-180">
+                                    <td>
                                         <div class="title">
                                             <i class="fa-solid fa-user-shield"></i>
                                             <p>Only host</p>
@@ -912,7 +961,7 @@ access to use this app.
                                     </td>
                                 </tr>
                                 <tr id="roomRecordingServer" class="hidden">
-                                    <td class="width-180">
+                                    <td>
                                         <div class="title">
                                             <i class="fas fa-cloud-arrow-up"></i>
                                             <p>Server</p>
@@ -942,7 +991,7 @@ access to use this app.
                             <hr />
                             <table class="settingsTable">
                                 <tr>
-                                    <td class="custom-width">
+                                    <td>
                                         <div class="title">
                                             <i class="fa-solid fa-circle pulsate cr"></i>
                                             <p>REC time:</p>
@@ -968,7 +1017,7 @@ access to use this app.
                             <hr />
                             <table class="settingsTable">
                                 <tr id="avatars">
-                                    <td class="width-180">
+                                    <td>
                                         <div class="title">
                                             <i class="fa-solid fa-users-line"></i>
                                             <p>Show free avatars</p>
@@ -1091,10 +1140,8 @@ access to use this app.
                     </div>
 
                     <div id="tabProfile" class="tabcontent">
-                        <div>
-                            <img id="myProfileAvatar" />
-                        </div>
-                        <table class="settingsTable">
+                        <img id="myProfileAvatar" />
+                        <table id="shortcutsTable">
                             <tr>
                                 <td>
                                     <div class="title">
@@ -1132,7 +1179,7 @@ access to use this app.
                     <div id="tabShortcuts" class="tabcontent">
                         <table class="settingsTable">
                             <tr>
-                                <td class="width-180">
+                                <td>
                                     <div class="title">
                                         <i class="fa-solid fa-keyboard"></i>
                                         <p>Shortcuts</p>
@@ -1308,7 +1355,7 @@ access to use this app.
                         <input id="themeColorPicker" class="theme-color-picker" type="text" />
                         <br />
                         <div class="inline-check-box">
-                            <div class="custom-width">
+                            <div>
                                 <i class="fas fa-save"></i>
                                 <p>Keep custom</p>
                             </div>

@@ -26,16 +26,12 @@
 
         <!-- https://ogp.me -->
 
-        <meta id="ogType" property="og:type" content="app-webrtc" />
-        <meta id="ogSiteName" property="og:site_name" content="MiroTalk SFU" />
-        <meta id="ogTitle" property="og:title" content="Click the link to make a call." />
-        <meta
-            id="ogDescription"
-            property="og:description"
-            content="MiroTalk SFU calling provides real-time video calls, messaging and screen sharing."
-        />
-        <meta id="ogImage" property="og:image" content="https://sfu.mirotalk.com/images/mirotalksfu.png" />
-        <meta id="ogUrl" property="og:url" content="https://sfu.mirotalk.com" />
+        <meta property="og:type" content="{{OG_TYPE}}" />
+        <meta property="og:site_name" content="{{OG_SITE_NAME}}" />
+        <meta property="og:title" content="{{OG_TITLE}}" />
+        <meta property="og:description" content="{{OG_DESCRIPTION}}" />
+        <meta property="og:image" content="{{OG_IMAGE}}" />
+        <meta property="og:url" content="{{OG_URL}}" />
 
         <!-- StyleSheet -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
@@ -85,12 +81,12 @@
                     <div class="container">
                         <div class="hero-inner">
                             <div class="hero-copy reveal-from-bottom">
-                                <h1 class="hero-title mt-0">
+                                <h1 id="newRoomTitle" class="hero-title mt-0">
                                     Pick name. <br />
                                     Share URL. <br />
                                     Start conference.
                                 </h1>
-                                <p class="hero-paragraph">
+                                <p id="newRoomDescription" class="hero-paragraph">
                                     Each room has its disposable URL. Just pick a room name and share your custom URL.
                                     It's that easy.
                                 </p>
@@ -119,7 +115,7 @@
                 <section class="cta section mb-32">
                     <div class="container">
                         <div class="cta-inner section-inner br-12">
-                            <h3 class="section-title mt-0">
+                            <h3 id="joinDescription" class="section-title mt-0">
                                 Pick a room name.<br />
                                 How about this one?
                             </h3>
@@ -138,7 +134,7 @@
                                     </div>
                                 </div>
                                 <div id="lastRoomContainer" class="last-room">
-                                    <span>Your recent room:</span>
+                                    <span id="joinLastLabel">Your recent room:</span>
                                     <a id="lastRoom"></a>
                                 </div>
                             </div>

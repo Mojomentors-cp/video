@@ -11,7 +11,7 @@ if (location.href.substr(0, 5) !== 'https') location.href = 'https' + location.h
  * @license For commercial or closed source, contact us at license.mirotalk@gmail.com or purchase directly via CodeCanyon
  * @license CodeCanyon: https://codecanyon.net/item/mirotalk-sfu-webrtc-realtime-video-conferences/40769970
  * @author  Miroslav Pejic - miroslav.pejic.85@gmail.com
- * @version 1.7.09
+ * @version 1.8.13
  *
  */
 
@@ -189,8 +189,22 @@ const speakerSelect = getId('speakerSelect');
 const initSpeakerSelect = getId('initSpeakerSelect');
 
 // ####################################################
+// VIRTUAL BACKGROUND DEFAULT IMAGES AND INIT CLASS
+// ####################################################
+
+const virtualBackgrounds = Object.values(image.virtualBackground);
+
+const virtualBackground = new VirtualBackground();
+
+const isMediaStreamTrackAndTransformerSupported = virtualBackground.checkSupport();
+
+// ####################################################
 // DYNAMIC SETTINGS
 // ####################################################
+
+let virtualBackgroundBlurLevel;
+let virtualBackgroundSelectedImage;
+let virtualBackgroundTransparent;
 
 let swalBackground = 'radial-gradient(#393939, #000000)'; //'rgba(0, 0, 0, 0.7)';
 
@@ -204,6 +218,7 @@ let room_id = getRoomId();
 let room_password = getRoomPassword();
 let room_duration = getRoomDuration();
 let peer_name = getPeerName();
+let peer_avatar = getPeerAvatar();
 let peer_uuid = getPeerUUID();
 let peer_token = getPeerToken();
 let isScreenAllowed = getScreen();
@@ -228,7 +243,6 @@ let isEnumerateVideoDevices = false;
 let isAudioAllowed = false;
 let isVideoAllowed = false;
 let isVideoPrivacyActive = false;
-let isInitVideoMirror = true;
 let isRecording = false;
 let isAudioVideoAllowed = false;
 let isParticipantsListOpen = false;
@@ -244,6 +258,7 @@ let audio = false;
 let video = false;
 let screen = false;
 let hand = false;
+let camera = 'user';
 
 let recTimer = null;
 let recElapsedTime = null;
@@ -315,6 +330,12 @@ function initClient() {
             'right',
         );
         setTippy('initVideoAudioRefreshButton', 'Refresh audio/video devices', 'top');
+        setTippy(
+            'screenOptimizationLabel',
+            'Detail: For high fidelity (screen sharing with text/graphics)<br />Motion: For high frame rate (video playback, game streaming',
+            'right',
+            true,
+        );
         setTippy('switchPitchBar', 'Toggle audio pitch bar', 'right');
         setTippy('switchSounds', 'Toggle the sounds notifications', 'right');
         setTippy('switchShare', "Show 'Share Room' popup on join", 'right');
@@ -696,7 +717,9 @@ function setupInitButtons() {
     };
     initVideoMirrorButton.onclick = () => {
         initVideo.classList.toggle('mirror');
-        isInitVideoMirror = initVideo.classList.contains('mirror');
+    };
+    initVirtualBackgroundButton.onclick = () => {
+        showImageSelector();
     };
     initUsernameEmojiButton.onclick = () => {
         getId('usernameInput').value = '';
@@ -828,6 +851,16 @@ function getPeerName() {
     return name;
 }
 
+function getPeerAvatar() {
+    const avatar = getQueryParam('avatar');
+    const avatarDisabled = avatar === '0' || avatar === 'false';
+    console.log('Direct join', { avatar: avatar });
+    if (avatarDisabled || !isImageURL(avatar)) {
+        return false;
+    }
+    return avatar;
+}
+
 function getPeerUUID() {
     if (lS.getItemLocalStorage('peer_uuid')) {
         return lS.getItemLocalStorage('peer_uuid');
@@ -944,6 +977,7 @@ function getPeerInfo() {
         peer_uuid: peer_uuid,
         peer_id: socket.id,
         peer_name: peer_name,
+        peer_avatar: peer_avatar,
         peer_token: peer_token,
         peer_presenter: isPresenter,
         peer_audio: isAudioAllowed,
@@ -1032,6 +1066,15 @@ async function whoAreYou() {
         BUTTONS.main.startScreenButton && show(initStartScreenButton);
     }
 
+    // Virtual Background if supported (Chrome/Edge/Opera/Vivaldi/...)
+    if (
+        isMediaStreamTrackAndTransformerSupported &&
+        (BUTTONS.settings.virtualBackground !== undefined ? BUTTONS.settings.virtualBackground : true)
+    ) {
+        show(initVirtualBackgroundButton);
+        show(videoVirtualBackground);
+    }
+
     if (peer_name) {
         hide(loadingDiv);
         checkMedia();
@@ -1104,7 +1147,7 @@ async function whoAreYou() {
         allowOutsideClick: false,
         allowEscapeKey: false,
         background: swalBackground,
-        title: BRAND.app.name,
+        title: BRAND.app?.name,
         input: 'text',
         inputPlaceholder: 'Enter your email or name',
         inputAttributes: { maxlength: 32, id: 'usernameInput' },
@@ -1173,6 +1216,14 @@ function handleVideo() {
     setColor(startVideoButton, isVideoAllowed ? 'white' : 'red');
     checkInitVideo(isVideoAllowed);
     lS.setInitConfig(lS.MEDIA_TYPE.video, isVideoAllowed);
+
+    elemDisplay('imageGrid', false);
+
+    isVideoAllowed &&
+    isMediaStreamTrackAndTransformerSupported &&
+    (BUTTONS.settings.virtualBackground !== undefined ? BUTTONS.settings.virtualBackground : true)
+        ? show(initVirtualBackgroundButton)
+        : hide(initVirtualBackgroundButton);
 }
 
 async function handleAudioVideo() {
@@ -1198,6 +1249,14 @@ async function handleAudioVideo() {
     setColor(startVideoButton, isVideoAllowed ? 'white' : 'red');
     await checkInitVideo(isVideoAllowed);
     checkInitAudio(isAudioAllowed);
+
+    elemDisplay('imageGrid', false);
+
+    isVideoAllowed &&
+    isMediaStreamTrackAndTransformerSupported &&
+    (BUTTONS.settings.virtualBackground !== undefined ? BUTTONS.settings.virtualBackground : true)
+        ? show(initVirtualBackgroundButton)
+        : hide(initVirtualBackgroundButton);
 }
 
 async function checkInitVideo(isVideoAllowed) {
@@ -1226,6 +1285,7 @@ function checkInitAudio(isAudioAllowed) {
 
 function initVideoContainerShow(show = true) {
     initVideoContainerClass.style.width = show ? '100%' : 'auto';
+    initVideoContainerClass.style.padding = show ? '10px' : '0px';
 }
 
 function checkMedia() {
@@ -1309,8 +1369,18 @@ async function shareRoom(useNavigator = false) {
 // ####################################################
 
 function makeRoomQR() {
-    let qr = new QRious({
+    const qr = new QRious({
         element: document.getElementById('qrRoom'),
+        value: RoomURL,
+    });
+    qr.set({
+        size: 256,
+    });
+}
+
+function makeRoomPopupQR() {
+    const qr = new QRious({
+        element: document.getElementById('qrRoomPopup'),
         value: RoomURL,
     });
     qr.set({
@@ -1413,12 +1483,17 @@ function joinRoom(peer_name, room_id) {
 }
 
 function roomIsReady() {
-    if (rc.isValidEmail(peer_name)) {
+    makeRoomPopupQR();
+
+    if (peer_avatar && isImageURL(peer_avatar)) {
+        myProfileAvatar.setAttribute('src', peer_avatar);
+    } else if (rc.isValidEmail(peer_name)) {
         myProfileAvatar.style.borderRadius = `50px`;
         myProfileAvatar.setAttribute('src', rc.genGravatar(peer_name));
     } else {
         myProfileAvatar.setAttribute('src', rc.genAvatarSvg(peer_name, 64));
     }
+
     show(toggleExtraButton); //*
     BUTTONS.main.exitButton && show(exitButton);
     BUTTONS.main.shareButton && show(shareButton);
@@ -1523,6 +1598,12 @@ function roomIsReady() {
     BUTTONS.main.aboutButton && show(aboutButton);
     if (!isMobileDevice) show(pinUnpinGridDiv);
     if (!isSpeechSynthesisSupported) hide(speechMsgDiv);
+    if (
+        isMediaStreamTrackAndTransformerSupported &&
+        (BUTTONS.settings.virtualBackground !== undefined ? BUTTONS.settings.virtualBackground : true)
+    ) {
+        rc.showVideoImageSelector();
+    }
     handleButtons();
     handleSelects();
     handleInputs();
@@ -1656,6 +1737,14 @@ function handleButtons() {
     shareButton.onclick = () => {
         shareRoom(true);
     };
+    shareButton.onmouseenter = () => {
+        if (isMobileDevice || !BUTTONS.main.shareQr) return;
+        show(qrRoomPopupContainer);
+    };
+    shareButton.onmouseleave = () => {
+        if (isMobileDevice || !BUTTONS.main.shareQr) return;
+        hide(qrRoomPopupContainer);
+    };
     hideMeButton.onclick = (e) => {
         if (isHideALLVideosActive) {
             return userLog('warning', 'To use this feature, please toggle video focus mode', 'top-end', 6000);
@@ -1725,6 +1814,7 @@ function handleButtons() {
         showFreeAvatars = e.currentTarget.checked;
         rc.getAvatarList();
     };
+    avatarQuality.selectedIndex = 1;
     avatarQuality.onchange = (e) => {
         VideoAI.quality = e.target.value;
     };
@@ -2147,6 +2237,7 @@ function setButtonsInit() {
         setTippy('initStartScreenButton', 'Toggle screen sharing', 'top');
         setTippy('initStopScreenButton', 'Toggle screen sharing', 'top');
         setTippy('initVideoMirrorButton', 'Toggle video mirror', 'top');
+        setTippy('initVirtualBackgroundButton', 'Set Virtual Background or Blur', 'top');
         setTippy('initUsernameEmojiButton', 'Toggle username emoji', 'top');
     }
     if (!isAudioAllowed) hide(initAudioButton);
@@ -2250,9 +2341,6 @@ async function changeCamera(deviceId) {
         await stopTracks(initStream);
         elemDisplay('initVideo', true);
         initVideoContainerShow();
-        if (!initVideo.classList.contains('mirror')) {
-            initVideo.classList.toggle('mirror');
-        }
     }
     const videoConstraints = {
         audio: false,
@@ -2265,8 +2353,7 @@ async function changeCamera(deviceId) {
     };
     await navigator.mediaDevices
         .getUserMedia(videoConstraints)
-        .then((camStream) => {
-            initVideo.className = 'mirror';
+        .then(async (camStream) => {
             initVideo.srcObject = camStream;
             initStream = camStream;
             console.log(
@@ -2274,12 +2361,29 @@ async function changeCamera(deviceId) {
                 initStream.getVideoTracks()[0].getSettings(),
             );
             checkInitConfig();
+            camera = detectCameraFacingMode(camStream);
             handleCameraMirror(initVideo);
         })
         .catch((error) => {
             console.error('[Error] changeCamera', error);
             handleMediaError('video/audio', error, '/');
         });
+
+    if (isVideoAllowed) {
+        await loadVirtualBackgroundSettings();
+    }
+}
+
+function detectCameraFacingMode(stream) {
+    if (!stream || !stream.getVideoTracks().length) {
+        console.warn("No video track found in the stream. Defaulting to 'user'.");
+        return 'user';
+    }
+    const videoTrack = stream.getVideoTracks()[0];
+    const settings = videoTrack.getSettings();
+    const capabilities = videoTrack.getCapabilities?.() || {};
+    const facingMode = settings.facingMode || capabilities.facingMode?.[0] || 'user';
+    return facingMode === 'environment' ? 'environment' : 'user';
 }
 
 // ####################################################
@@ -2392,6 +2496,7 @@ async function toggleScreenSharing() {
                 disable(initVideoButton, true);
                 disable(initAudioVideoButton, true);
                 disable(initVideoAudioRefreshButton, true);
+                disable(initVirtualBackgroundButton, true);
             })
             .catch((error) => {
                 console.error('[Error] toggleScreenSharing', error);
@@ -2406,23 +2511,14 @@ async function toggleScreenSharing() {
         disable(initVideoButton, false);
         disable(initAudioVideoButton, false);
         disable(initVideoAudioRefreshButton, false);
+        disable(initVirtualBackgroundButton, false);
     }
 }
 
 function handleCameraMirror(video) {
-    if (isDesktopDevice) {
-        // Desktop devices...
-        if (!video.classList.contains('mirror')) {
-            video.classList.toggle('mirror');
-            isInitVideoMirror = true;
-        }
-    } else {
-        // Mobile, Tablet, IPad devices...
-        if (video.classList.contains('mirror')) {
-            video.classList.remove('mirror');
-            isInitVideoMirror = false;
-        }
-    }
+    camera === 'environment'
+        ? video.classList.remove('mirror') // Back camera → No mirror
+        : video.classList.add('mirror'); // Disable mirror for rear camera
 }
 
 function handleSelects() {
@@ -2437,6 +2533,11 @@ function handleSelects() {
     };
     screenQuality.onchange = () => {
         rc.closeThenProduce(RoomClient.mediaType.screen);
+    };
+    screenOptimization.onchange = () => {
+        rc.closeThenProduce(RoomClient.mediaType.screen);
+        localStorageSettings.screen_optimization = screenOptimization.selectedIndex;
+        lS.setSettings(localStorageSettings);
     };
     videoFps.onchange = () => {
         rc.closeThenProduce(RoomClient.mediaType.video, videoSelect.value);
@@ -3185,6 +3286,7 @@ function loadSettingsFromLocalStorage() {
     micVolumeRange.value = localStorageSettings.mic_volume || 100;
     micVolumeValue.innerText = localStorageSettings.mic_volume || 100;
 
+    screenOptimization.selectedIndex = localStorageSettings.screen_optimization;
     videoFps.selectedIndex = localStorageSettings.video_fps;
     screenFps.selectedIndex = localStorageSettings.screen_fps;
     BtnVideoObjectFit.selectedIndex = localStorageSettings.video_obj_fit;
@@ -3634,8 +3736,15 @@ async function sound(name, force = false) {
     }
 }
 
-function isImageURL(url) {
-    return url.match(/\.(jpeg|jpg|gif|png|tiff|bmp)$/) != null;
+async function isImageURL(url) {
+    if (!url) return false;
+    try {
+        const response = await fetch(url, { method: 'HEAD' });
+        const contentType = response.headers.get('content-type');
+        return contentType && contentType.startsWith('image/');
+    } catch {
+        return false;
+    }
 }
 
 function isMobile(userAgent) {
@@ -4343,7 +4452,7 @@ function getParticipantsList(peers) {
             data-to-id="ChatGPT"
             data-to-name="ChatGPT"
             class="clearfix${chatgpt_active}" 
-            onclick="rc.showPeerAboutAndMessages(this.id, 'ChatGPT', event)"
+            onclick="rc.showPeerAboutAndMessages(this.id, 'ChatGPT', '', event)"
         >
             <img 
                 src="${image.chatgpt}"
@@ -4364,7 +4473,7 @@ function getParticipantsList(peers) {
         data-to-id="all"
         data-to-name="all"
         class="clearfix${public_chat_active}" 
-        onclick="rc.showPeerAboutAndMessages(this.id, 'all', event)"
+        onclick="rc.showPeerAboutAndMessages(this.id, 'all', '', event)"
     >
         <img 
             src="${image.all}"
@@ -4425,7 +4534,9 @@ function getParticipantsList(peers) {
     // PEERS IN THE CURRENT ROOM
     for (const peer of Array.from(peers.keys())) {
         const peer_info = peers.get(peer).peer_info;
+        console.log('PEER-INFO------->', peer_info);
         const peer_name = peer_info.peer_name;
+        const peer_avatar = peer_info.peer_avatar;
         const peer_name_limited = peer_name.length > 15 ? peer_name.substring(0, 10) + '*****' : peer_name;
         //const peer_presenter = peer_info.peer_presenter ? _PEER.presenter : _PEER.guest;
         const peer_audio = peer_info.peer_audio ? _PEER.audioOn : _PEER.audioOff;
@@ -4437,7 +4548,7 @@ function getParticipantsList(peers) {
         const peer_geoLocation = _PEER.geoLocation;
         const peer_sendFile = _PEER.sendFile;
         const peer_id = peer_info.peer_id;
-        const avatarImg = getParticipantAvatar(peer_name);
+        const avatarImg = getParticipantAvatar(peer_name, peer_avatar);
 
         const peer_chat_active = rc.chatPeerId === peer_id ? ' active' : '';
 
@@ -4451,7 +4562,7 @@ function getParticipantsList(peers) {
                     data-to-id="${peer_id}" 
                     data-to-name="${peer_name}"
                     class="clearfix${peer_chat_active}" 
-                    onclick="rc.showPeerAboutAndMessages(this.id, '${peer_name}', event)"
+                    onclick="rc.showPeerAboutAndMessages(this.id, '${peer_name}', '${peer_avatar}', event)"
                 >
                     <img
                         src="${avatarImg}"
@@ -4527,7 +4638,7 @@ function getParticipantsList(peers) {
                     data-to-id="${peer_id}"
                     data-to-name="${peer_name}"
                     class="clearfix${peer_chat_active}" 
-                    onclick="rc.showPeerAboutAndMessages(this.id, '${peer_name}', event)"
+                    onclick="rc.showPeerAboutAndMessages(this.id, '${peer_name}', '${peer_avatar}', event)"
                 >
                 <img 
                     src="${avatarImg}"
@@ -4619,7 +4730,10 @@ function refreshParticipantsCount(count, adapt = true) {
     if (adapt) adaptAspectRatio(count);
 }
 
-function getParticipantAvatar(peerName) {
+function getParticipantAvatar(peerName, peerAvatar = false) {
+    if (peerAvatar && rc.isImageURL(peerAvatar)) {
+        return peerAvatar;
+    }
     if (rc.isValidEmail(peerName)) {
         return rc.genGravatar(peerName);
     }
@@ -4826,7 +4940,7 @@ function setTheme() {
 // ####################################################
 
 function handleAspectRatio() {
-    if (participantsCount > 1) {
+    if (videoMediaContainer.childElementCount > 1) {
         adaptAspectRatio(videoMediaContainer.childElementCount);
     } else {
         resizeVideoMedia();
@@ -4893,6 +5007,339 @@ function adaptAspectRatio(participantsCount) {
 }
 
 // ####################################################
+// HANDLE INIT VIRTUAL BACKGROUND AND BLUR
+// ####################################################
+
+function showImageSelector() {
+    elemDisplay('imageGrid', true, 'grid');
+    if (imageGrid.innerHTML !== '') return;
+
+    imageGrid.innerHTML = ''; // Clear previous images
+
+    function createImage(id, src, tooltip, index, clickHandler) {
+        const img = document.createElement('img');
+        img.id = id;
+        img.src = src;
+        img.dataset.index = index;
+        img.addEventListener('click', clickHandler);
+        imageGrid.appendChild(img);
+        if (tooltip) {
+            setTippy(img.id, tooltip, 'top');
+        }
+    }
+
+    // Common function to handle virtual background changes
+    async function handleVirtualBackground(blurLevel = null, imgSrc = null, bgTransparent = null) {
+        if (!blurLevel && !imgSrc && !bgTransparent) {
+            virtualBackgroundBlurLevel = null;
+            virtualBackgroundSelectedImage = null;
+            virtualBackgroundTransparent = null;
+            elemDisplay('imageGrid', false);
+        }
+        await applyVirtualBackground(initVideo, initStream, blurLevel, imgSrc, bgTransparent);
+    }
+
+    // Create clean virtual bg Image
+    createImage('initCleanVbImg', image.user, 'Remove virtual background', 'cleanVb', () =>
+        handleVirtualBackground(null, null),
+    );
+    // Create High Blur Image
+    createImage('initHighBlurImg', image.blurHigh, 'High Blur', 'high', () => handleVirtualBackground(20));
+    // Create Low Blur Image
+    createImage('initLowBlurImg', image.blurLow, 'Low Blur', 'low', () => handleVirtualBackground(10));
+
+    // Create transparent virtual bg Image
+    createImage('initTransparentBg', image.transparentBg, 'Transparent Virtual background', 'transparentVb', () =>
+        handleVirtualBackground(null, null, true),
+    );
+
+    // Handle file upload (common logic for file selection)
+    function setupFileUploadButton(buttonId, sourceImg, tooltip, handler) {
+        const imgButton = document.createElement('img');
+        imgButton.id = buttonId;
+        imgButton.src = sourceImg;
+        imgButton.addEventListener('click', handler);
+        imageGrid.appendChild(imgButton);
+        setTippy(imgButton.id, tooltip, 'top');
+    }
+
+    function handleFileUpload(file) {
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const imgData = e.target.result;
+                await indexedDBHelper.saveImage(imgData);
+                addImageToUI(imgData);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function createUploadImageButton() {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+        fileInput.addEventListener('change', (event) => {
+            handleFileUpload(event.target.files[0]);
+        });
+
+        setupFileUploadButton('initUploadImg', image.upload, 'Upload your custom image', () => fileInput.click());
+
+        return fileInput;
+    }
+
+    // Function to add an image to UI
+    function addImageToUI(imgData) {
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'image-wrapper';
+
+        const customImg = document.createElement('img');
+        customImg.src = imgData;
+        customImg.addEventListener('click', () => handleVirtualBackground(null, imgData));
+
+        const deleteBtn = document.createElement('span');
+        deleteBtn.className = 'delete-icon fas fa-times';
+        deleteBtn.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            await indexedDBHelper.removeImage(imgData);
+            imageContainer.remove();
+        });
+
+        imageContainer.appendChild(customImg);
+        imageContainer.appendChild(deleteBtn);
+        imageGrid.appendChild(imageContainer);
+    }
+
+    // Function to fetch and store an image from URL
+    async function fetchAndStoreImage(url) {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const imgData = e.target.result;
+                await indexedDBHelper.saveImage(imgData);
+                addImageToUI(imgData);
+            };
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error('Error fetching image:', error);
+            // Detect CORS issue and provide a clearer error message
+            error.message.includes('Failed to fetch')
+                ? showError(initErrorMessage, 'Error: Unable to fetch image. CORS policy may be blocking the request.')
+                : showError(initErrorMessage, `Error fetching image: ${error.message}`);
+        }
+    }
+
+    // Paste image from URL
+    function askForImageURL() {
+        elemDisplay(initImageUrlModal.id, true);
+        navigator.clipboard
+            .readText()
+            .then((clipboardText) => {
+                if (isValidImageURL(filterXSS(clipboardText))) {
+                    initImageUrlInput.value = clipboardText;
+                }
+            })
+            .catch(() => {});
+    }
+
+    initSaveImageUrlBtn.addEventListener('click', async () => {
+        elemDisplay(initImageUrlModal.id, false);
+        if (isValidImageURL(initImageUrlInput.value)) {
+            await fetchAndStoreImage(initImageUrlInput.value);
+            initImageUrlInput.value = '';
+        }
+    });
+
+    initCancelImageUrlBtn.addEventListener('click', () => {
+        elemDisplay(initImageUrlModal.id, false);
+        initImageUrlInput.value = '';
+    });
+
+    // Upload from file button
+    createUploadImageButton();
+
+    // Upload from URL button
+    setupFileUploadButton('initLinkImage', image.link, 'Upload Image from URL', askForImageURL);
+
+    // Load default virtual backgrounds
+    virtualBackgrounds.forEach((imageUrl, index) => {
+        createImage(`initVirtualBg${index}`, imageUrl, null, index + 1, () => handleVirtualBackground(null, imageUrl));
+    });
+
+    // Load stored images and add to image grid UI
+    indexedDBHelper.getAllImages().then((images) => images.forEach(addImageToUI));
+
+    // Upload image with drag and drop
+    imageGrid.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        imageGrid.classList.add('drag-over');
+    });
+
+    imageGrid.addEventListener('dragleave', () => {
+        imageGrid.classList.remove('drag-over');
+    });
+
+    imageGrid.addEventListener('drop', (event) => {
+        event.preventDefault();
+        imageGrid.classList.remove('drag-over');
+        if (event.dataTransfer.files.length > 0) {
+            handleFileUpload(event.dataTransfer.files[0]);
+        }
+    });
+}
+
+// ####################################################
+// VIRTUAL BACKGROUND HELPER
+// ####################################################
+
+async function applyVirtualBackground(videoElement, stream, blurLevel, backgroundImage, backgroundTransparent) {
+    const videoTrack = stream.getVideoTracks()[0];
+
+    if (blurLevel) {
+        videoElement.srcObject = await virtualBackground.applyBlurToWebRTCStream(videoTrack, blurLevel);
+        virtualBackgroundBlurLevel = blurLevel;
+        virtualBackgroundSelectedImage = null;
+        virtualBackgroundTransparent = null;
+    } else if (backgroundImage) {
+        videoElement.srcObject = await virtualBackground.applyVirtualBackgroundToWebRTCStream(
+            videoTrack,
+            backgroundImage,
+        );
+        virtualBackgroundSelectedImage = backgroundImage;
+        virtualBackgroundBlurLevel = null;
+        virtualBackgroundTransparent = null;
+    } else if (backgroundTransparent) {
+        videoElement.srcObject = await virtualBackground.applyTransparentVirtualBackgroundToWebRTCStream(videoTrack);
+        virtualBackgroundBlurLevel = null;
+        virtualBackgroundSelectedImage = null;
+        virtualBackgroundTransparent = true;
+    } else {
+        videoElement.srcObject = stream; // Default case, use original stream
+        virtualBackgroundBlurLevel = null;
+        virtualBackgroundSelectedImage = null;
+        virtualBackgroundTransparent = null;
+    }
+
+    saveVirtualBackgroundSettings(blurLevel, backgroundImage, backgroundTransparent);
+}
+
+function isValidImageURL(url) {
+    return (
+        url.match(/\.(jpeg|jpg|png|gif|webp|bmp|svg|apng|avif|heif|heic|tiff?|ico|cur|jfif|pjpeg|pjp|raw)$/i) !== null
+    );
+}
+
+// ####################################################
+// VIRTUAL BACKGROUND INDEXDB HELPER
+// ####################################################
+
+const indexedDBHelper = {
+    async openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('customImageDB', 1);
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('images')) {
+                    db.createObjectStore('images', { keyPath: 'id', autoIncrement: true });
+                }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    },
+    async saveImage(imgData) {
+        const db = await this.openDB();
+        const transaction = db.transaction('images', 'readwrite');
+        transaction.objectStore('images').add({ imgData });
+    },
+    async getAllImages() {
+        const db = await this.openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction('images', 'readonly');
+            const store = transaction.objectStore('images');
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result.map((item) => item.imgData));
+            request.onerror = () => reject(request.error);
+        });
+    },
+    async removeImage(imgData) {
+        const db = await this.openDB();
+        const transaction = db.transaction('images', 'readwrite');
+        const store = transaction.objectStore('images');
+
+        const request = store.getAll();
+        request.onsuccess = () => {
+            const item = request.result.find((item) => item.imgData === imgData);
+            if (item) store.delete(item.id);
+        };
+    },
+};
+
+// ####################################################
+// VIRTUAL BACKGROUND LOCAL STORAGE SETTINGS
+// ####################################################
+
+function saveVirtualBackgroundSettings(blurLevel, imageUrl, transparent) {
+    const settings = {
+        blurLevel: blurLevel || null,
+        imageUrl: imageUrl || null,
+        transparent: transparent || null,
+    };
+    localStorage.setItem('virtualBackgroundSettings', JSON.stringify(settings));
+}
+
+async function loadVirtualBackgroundSettings() {
+    if (!isMediaStreamTrackAndTransformerSupported) return;
+
+    const savedSettings = localStorage.getItem('virtualBackgroundSettings');
+
+    if (!savedSettings) return;
+
+    const { blurLevel, imageUrl, transparent } = JSON.parse(savedSettings);
+
+    if (blurLevel) {
+        await applyVirtualBackground(initVideo, initStream, blurLevel);
+    } else if (imageUrl) {
+        await applyVirtualBackground(initVideo, initStream, null, imageUrl);
+    } else if (transparent) {
+        await applyVirtualBackground(initVideo, initStream, null, null, true);
+    }
+
+    if (virtualBackgroundBlurLevel || virtualBackgroundSelectedImage || virtualBackgroundTransparent) {
+        initVirtualBackgroundButton.click();
+    }
+}
+
+// ####################################################
+// HANDLE ERRORS
+// ####################################################
+
+function showError(errorElement, message, delay = 5000) {
+    errorElement.innerText = message;
+
+    elemDisplay(errorElement.id, true);
+
+    setTimeout(() => {
+        errorElement.classList.add('fade-in');
+        errorElement.classList.remove('fade-out');
+    }, 100);
+
+    setTimeout(() => {
+        errorElement.classList.remove('fade-in');
+        errorElement.classList.add('fade-out');
+    }, delay);
+
+    setTimeout(() => {
+        if (errorElement.classList.contains('fade-out')) {
+            elemDisplay(errorElement.id, false);
+        }
+    }, delay + 500);
+}
+
+// ####################################################
 // ABOUT
 // ####################################################
 
@@ -4901,39 +5348,47 @@ function showAbout() {
 
     Swal.fire({
         background: swalBackground,
-        imageUrl: image.about,
-        customClass: { image: 'img-about' },
         position: 'center',
-        title: 'WebRTC SFU v1.7.09',
+        imageUrl: BRAND.about?.imageUrl && BRAND.about.imageUrl.trim() !== '' ? BRAND.about.imageUrl : image.about,
+        customClass: { image: 'img-about' },
+        title: BRAND.about?.title && BRAND.about.title.trim() !== '' ? BRAND.about.title : 'WebRTC SFU v1.8.13',
         html: `
-        <br />
-        <div id="about">
-            <button 
-                id="support-button" 
-                data-umami-event="Support button" 
-                onclick="window.open('https://codecanyon.net/user/miroslavpejic85')">
-                <i class="fas fa-heart"></i> 
-                Support
-            </button>
-            <br /><br /><br />
-            Author: <a 
-                id="linkedin-button" 
-                data-umami-event="Linkedin button" 
-                href="https://www.linkedin.com/in/miroslav-pejic-976a07101/" target="_blank"> 
-                Miroslav Pejic
-            </a>
-            <br /><br />
-            Email:<a 
-                id="email-button" 
-                data-umami-event="Email button" 
-                href="mailto:miroslav.pejic.85@gmail.com?subject=MiroTalk SFU info"> 
-                miroslav.pejic.85@gmail.com
-            </a>
-            <br /><br />
-            <hr />
-            <span>&copy; 2025 MiroTalk SFU, all rights reserved</span>
-            <hr />
-        </div>
+            <br />
+            <div id="about">
+                ${
+                    BRAND.about?.html && BRAND.about.html.trim() !== ''
+                        ? BRAND.about.html
+                        : `
+                            <button 
+                                id="support-button" 
+                                data-umami-event="Support button" 
+                                onclick="window.open('https://codecanyon.net/user/miroslavpejic85', '_blank')">
+                                <i class="fas fa-heart"></i> Support
+                            </button>
+                            <br /><br /><br />
+                            Author: 
+                            <a 
+                                id="linkedin-button" 
+                                data-umami-event="Linkedin button" 
+                                href="https://www.linkedin.com/in/miroslav-pejic-976a07101/" 
+                                target="_blank"> 
+                                Miroslav Pejic
+                            </a>
+                            <br /><br />
+                            Email: 
+                            <a 
+                                id="email-button" 
+                                data-umami-event="Email button" 
+                                href="mailto:miroslav.pejic.85@gmail.com?subject=MiroTalk SFU info"> 
+                                miroslav.pejic.85@gmail.com
+                            </a>
+                            <br /><br />
+                            <hr />
+                            <span>&copy; 2025 MiroTalk SFU, all rights reserved</span>
+                            <hr />
+                        `
+                }
+            </div>
         `,
         showClass: { popup: 'animate__animated animate__fadeInDown' },
         hideClass: { popup: 'animate__animated animate__fadeOutUp' },

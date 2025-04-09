@@ -15,6 +15,7 @@ const isRulesActive = true;
  */
 let BUTTONS = {
     main: {
+        shareQr: true,
         shareButton: true, // for quest, presenter default true
         hideMeButton: true,
         startAudioButton: true,
@@ -48,6 +49,7 @@ let BUTTONS = {
         host_only_recording: true, // presenter
         pushToTalk: true,
         keyboardShortcuts: true,
+        virtualBackground: true,
     },
     producerVideo: {
         videoPictureInPicture: true,

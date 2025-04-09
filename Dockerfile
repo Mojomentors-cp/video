@@ -1,5 +1,5 @@
-# Use a lightweight Node.js image
-FROM node:lts-slim
+# Use Node.js 22 LTS slim image as base
+FROM node:22-slim
 
 # Set working directory
 WORKDIR /src
@@ -16,14 +16,19 @@ RUN apt-get update \
         ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# Rename config.template.js to config.js
+COPY ./app/src/config.template.js ./app/src/config.js
+
 # Copy package.json and install npm dependencies
 COPY package.json .
 RUN npm install
 
 # Cleanup unnecessary packages and files
-RUN apt-get purge -y --auto-remove build-essential python3-pip \
-&& npm cache clean --force \
-&& rm -rf /tmp/* /var/tmp/* /usr/share/doc/*
+RUN apt-get purge -y --auto-remove \
+    python3-pip \
+    build-essential \
+    && npm cache clean --force \
+    && rm -rf /tmp/* /var/tmp/* /usr/share/doc/*
 
 # Copy the application code
 COPY app app

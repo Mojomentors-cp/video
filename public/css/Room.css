@@ -47,7 +47,13 @@ body {
 --------------------------------------------------------------*/
 
 .skiptranslate iframe,
-.goog-te-banner-frame.skiptranslate {
+.goog-te-banner-frame.skiptranslate,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+.VIpgJd-ZVi9od-aZ2wEe-OiiCO,
+#goog-gt-tt,
+#goog-gt-tt *,
+#goog-gt-vt,
+#goog-gt-vt * {
     display: none !important;
 }
 
@@ -113,6 +119,22 @@ body {
     width: 100%;
 }
 
+/*---------------------------
+> 1024px SCREEN */
+@media screen and (min-width: 1025px) {
+    .init-modal-size {
+        width: 1024px !important;
+    }
+    .init-user {
+        display: flex;
+    }
+    .init-video-container {
+        padding: 10px;
+    }
+}
+
+/*---------------------------
+<= 1024px SCREEN */
 @media screen and (max-width: 1024px) {
     .init-modal-size {
         width: auto !important;
@@ -141,7 +163,8 @@ body {
 }
 
 .init-user button {
-    width: 50px;
+    width: 48px;
+    height: 48px;
     padding: 10px;
     margin-top: 20px;
     margin-bottom: 10px;
@@ -154,6 +177,171 @@ body {
 .init-user button:hover {
     color: white;
     background: var(--body-bg);
+}
+
+/*--------------------------------------------------------------
+# Image Grid
+--------------------------------------------------------------*/
+.image-grid {
+    display: none;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    max-height: 120px;
+    border-radius: 8px;
+    background: transparent;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
+}
+
+/* Scrollbar Styling */
+.image-grid::-webkit-scrollbar {
+    width: 5px;
+}
+
+.image-grid::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+}
+
+/* Image Thumbnails */
+.image-grid img {
+    width: 100%;
+    max-width: 50px;
+    height: 45px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.image-grid img:hover {
+    opacity: 0.5;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Strong Impact Click Effect */
+.image-grid img:active {
+    transform: scale(1.2);
+    box-shadow: 0px 15px 35px rgba(0, 0, 0, 0.5);
+    animation: shockwave 0.15s ease-out;
+}
+
+.image-grid.drag-over {
+    box-shadow: inset 0 0 15px 3px rgba(255, 255, 255, 0.3);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+@keyframes shockwave {
+    0% {
+        transform: scale(1.2);
+        box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    50% {
+        transform: scale(0.9);
+        box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+    }
+    100% {
+        transform: scale(1.05);
+        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/*--------------------------------------------------------------
+# Custom image delete icon
+--------------------------------------------------------------*/
+
+.image-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.delete-icon {
+    position: absolute;
+    right: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #f5f5f5b0;
+    border-radius: 5px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+.delete-icon:hover {
+    background: var(--body-bg);
+    color: white;
+}
+
+/*--------------------------------------------------------------
+# Custom modal to paste image URL
+--------------------------------------------------------------*/
+
+.imageUrlModal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--body-bg);
+    width: 80%;
+    max-width: 400px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.imageUrlModal-content {
+    background: var(--body-bg);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.imageUrlModal input {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border: var(--border);
+    border-radius: 4px;
+}
+
+.imageUrlModal button {
+    padding: 10px 20px;
+    border: none;
+    background: var(--btns-bg-color);
+    border-radius: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.imageUrlModal button:hover {
+    background: var(--body-bg) !important;
+}
+
+/*--------------------------------------------------------------
+# Error span
+--------------------------------------------------------------*/
+
+.show-error {
+    margin-top: 10px !important;
+    color: red !important;
+    opacity: 0 !important;
+    transition: opacity 0.5s ease-in-out !important;
+    display: none;
+}
+
+.show-error.fade-in {
+    opacity: 1 !important;
+    display: block;
+}
+
+.show-error.fade-out {
+    opacity: 0 !important;
+    display: none;
 }
 
 /*--------------------------------------------------------------
@@ -253,7 +441,7 @@ body {
 
 @media screen and (max-width: 500px) {
     #bottomButtons button {
-        width: 36px;
+        width: 42px;
         font-size: 1rem;
     }
 }
@@ -275,6 +463,34 @@ body {
     align-items: center;
 }
 
+#qrRoomPopupContainer {
+    z-index: 9999;
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 10px;
+    background: var(--body-bg);
+    border: var(--border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+#qrText {
+    margin-top: 10px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+}
+
+#qrRoomPopup {
+    width: 256px;
+    height: 256px;
+}
+
 /*--------------------------------------------------------------
 # My settings
 --------------------------------------------------------------*/
@@ -282,10 +498,10 @@ body {
 #mySettings {
     z-index: 6;
     position: absolute;
-    margin: auto;
     padding: 10px;
     width: 50%;
     min-height: 480px;
+    max-height: 98vh; /* Prevents overflow */
     background: var(--settings-bg);
     box-shadow: var(--box-shadow);
     border: var(--border);
@@ -298,15 +514,19 @@ body {
     display: flex;
 }
 
+/* Medium screens */
 @media screen and (max-width: 1030px) {
     #mySettings {
         width: 75%;
     }
 }
 
+/* Smaller screens */
 @media screen and (max-width: 830px) {
     #mySettings {
-        width: 80%;
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
         min-height: auto;
     }
     .mySettingsMain {
@@ -314,9 +534,12 @@ body {
     }
 }
 
+/* Fullscreen on mobile */
 @media screen and (max-width: 500px) {
     #mySettings {
-        width: 90%;
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
     }
 }
 
@@ -412,13 +635,11 @@ body {
 
 #extraInfo {
     margin-left: 5px;
-    max-height: 400px;
 }
 
 #applyAudioOptionsButton {
-    width: 180px;
+    width: 100%;
     padding: 10px;
-    margin-left: 10px;
     font-size: 1rem;
     background: var(--body-bg);
     border: var(--border);
@@ -436,37 +657,40 @@ body {
 .settingsTable {
     width: 100%;
     color: #fff;
-    table-layout: fixed;
+    table-layout: auto;
     border-collapse: collapse;
     border-radius: 10px;
-    border-style: hidden;
     background: var(--body-bg);
 }
+
 .settingsTable td,
-th {
-    text-align: left;
+.settingsTable th {
     padding: 10px;
-    /* border: 1px solid grey; */
+    text-align: left;
 }
+
+.settingsTable td:first-child {
+    width: auto;
+}
+
+.settingsTable td:last-child {
+    width: 140px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Optional alternating row background */
 /* .settingsTable tr:nth-child(even) {
     background: var(--select-bg);
 } */
+
 .settingsTable i {
     border: none;
     border-radius: 5px;
 }
-.custom-width {
-    width: 140px;
-}
-.width-150 {
-    width: 150px;
-}
-.width-180 {
-    width: 180px;
-}
 
-.microphone-table-width {
-    width: 180px;
+.settingsTable select {
+    width: 100px !important;
 }
 
 /*--------------------------------------------------------------
@@ -485,8 +709,8 @@ th {
 }
 #shortcutsTable th,
 #shortcutsTable td {
-    border: var(--border);
     padding: 5px;
+    /* border: var(--border); */
 }
 #shortcutsTable th {
     background: var(--body-bg);
@@ -611,7 +835,7 @@ th {
 }
 
 .dropdown-menu button {
-    width: 240px;
+    min-width: 240px;
     padding: 8px 16px;
     align-items: center;
     justify-content: flex-start;
@@ -668,15 +892,11 @@ th {
 .tabActions {
     position: relative;
     width: 65%;
-    background-color: var(--body-bg);
-    min-height: 480px;
-    max-height: 768px;
-    overflow-x: hidden;
-    overflow-y: auto;
 }
 
 @media screen and (max-width: 830px) {
     .tab {
+        display: inline;
         width: 100%;
         min-height: auto;
         flex-direction: row;
@@ -691,12 +911,6 @@ th {
     }
 }
 
-@media screen and (max-width: 540px) {
-    .tab {
-        display: inline;
-    }
-}
-
 /* Style the buttons inside the tab */
 .tab button {
     margin: 3px;
@@ -704,7 +918,9 @@ th {
     float: left;
     text-align: left;
     color: #fff;
+    font-size: 1rem;
     border: var(--border);
+    border-radius: 5px;
     background-color: rgba(0, 0, 0, 0.2);
     outline: none;
     cursor: pointer;
@@ -713,7 +929,7 @@ th {
 
 /* Change background color of buttons on hover */
 .tab button:hover {
-    background-color: transparent;
+    background: var(--body-bg);
     transform: translateY(-3px);
 }
 
@@ -725,14 +941,15 @@ th {
 /* Style the tab content */
 .tabcontent {
     display: none;
+    margin-top: 15px;
     padding: 6px 12px;
+    width: 100%;
+    max-height: 585px;
+    min-height: 700px;
     border-top: none;
-}
-
-.tabcontent button i {
-    padding: 10px;
-    border: var(--border);
-    border-radius: 5px;
+    background-color: var(--body-bg);
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .tabcontent button {
@@ -743,6 +960,7 @@ th {
 
 .tabcontent button:hover {
     background: var(--body-bg);
+    transform: scale(1);
 }
 
 /* on open display devices tab */
@@ -1149,6 +1367,13 @@ select {
     display: block !important;
 }
 
+.top-center {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
 .center {
     position: fixed;
     top: 50%;
@@ -1499,16 +1724,6 @@ progress {
 
 hr {
     background: #ffffff !important;
-}
-
-.wa {
-    width: 260px;
-}
-
-@media screen and (max-width: 500px) {
-    .wa {
-        width: 220px;
-    }
 }
 
 .ml-5 {

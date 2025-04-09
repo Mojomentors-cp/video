@@ -30,9 +30,11 @@
 
 <hr />
 
-<p align="center">
-    Join our community for questions, discussions, and support on <a href="https://discord.gg/rgGYfeYW3N">Discord</a>
-</p>
+<strong>
+    <p align="center">
+        Join our Community for questions, help, support, ideas, and discussions on <a href='https://discord.gg/rgGYfeYW3N'>Discord</a>
+    </p>
+</strong>
 
 <hr />
 
@@ -56,6 +58,7 @@
 - Compatible with desktop and mobile devices.
 - Optimized mobile room URL sharing.
 - Webcam streaming with front and rear camera support for mobile devices.
+- Virtual Background and Blur Support: Upload from file, URL, or drag & drop!
 - Broadcasting, distribution of audio or video content to a wide audience.
 - Crystal-clear audio streaming with speaking detection and volume indicators.
 - Screen sharing for presentations.
@@ -201,12 +204,14 @@ $ git clone https://github.com/miroslavpejic85/mirotalksfu.git
 $ cd mirotalksfu
 # Copy app/src/config.template.js in app/src/config.js and edit it if needed
 $ cp app/src/config.template.js app/src/config.js
+# Copy .env.template to .env and edit it if needed
+$ cp .env.template .env
 # Install dependencies - be patient, the first time will take a few minutes, in the meantime have a good coffee ;)
 $ npm install
 # Start the server
 $ npm start
 # If you want to start the server on a different port than the default use an env var
-$ PORT=3011 npm start
+$ SERVER_LISTEN_PORT=3011 npm start
 ```
 
 - Open [https://localhost:3010](https://localhost:3010) or `:3011` if the default port has been changed in your browser.
@@ -236,6 +241,8 @@ $ git clone https://github.com/miroslavpejic85/mirotalksfu.git
 $ cd mirotalksfu
 # Copy app/src/config.template.js in app/src/config.js IMPORTANT (edit it according to your needs)
 $ cp app/src/config.template.js app/src/config.js
+# Copy .env.template to .env and edit it if needed
+$ cp .env.template .env
 # Copy docker-compose.template.yml in docker-compose.yml and edit it if needed
 $ cp docker-compose.template.yml docker-compose.yml
 # (Optional) Get official image from Docker Hub
@@ -280,31 +287,88 @@ To embed a meeting within `your service or app` using an iframe, you can use the
 
 - `Rest API:` The [API documentation](https://docs.mirotalk.com/mirotalk-sfu/api/) uses [swagger](https://swagger.io/) at https://localhost:3010/api/v1/docs or check it on live [here](https://sfu.mirotalk.com/api/v1/docs).
 
+### 1. Get Server Statistics
+
 ```bash
-# The response will give you the total of rooms and users.
-$ curl -X GET "http://localhost:3010/api/v1/stats" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json"
-$ curl -X GET "https://sfu.mirotalk.com/api/v1/stats" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json"
-# The response will give you the active meetings (default disabled).
-$ curl -X GET "http://localhost:3010/api/v1/meetings" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json"
-$ curl -X GET "https://sfu.mirotalk.com/api/v1/meetings" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json"
-# The response will give you a entrypoint / Room URL for your meeting.
-$ curl -X POST "http://localhost:3010/api/v1/meeting" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json"
-$ curl -X POST "https://sfu.mirotalk.com/api/v1/meeting" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json"
-# The response will give you a entrypoint / URL for the direct join to the meeting.
-$ curl -X POST "http://localhost:3010/api/v1/join" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json" --data '{"room":"test","roomPassword":"false","name":"mirotalksfu","audio":"false","video":"false","screen":"false","notify":"false","duration":"unlimited"}'
-$ curl -X POST "https://sfu.mirotalk.com/api/v1/join" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json" --data '{"room":"test","roomPassword":"false","name":"mirotalksfu","audio":"false","video":"false","screen":"false","notify":"false","duration":"unlimited"}'
-# The response will give you a entrypoint / URL for the direct join to the meeting with a token.
-$ curl -X POST "http://localhost:3010/api/v1/join" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json" --data '{"room":"test","roomPassword":"false","name":"mirotalksfu","audio":"false","video":"false","screen":"false","notify":"false","duration":"unlimited","token":{"username":"username","password":"password","presenter":"true", "expire":"1h"}}'
-$ curl -X POST "https://sfu.mirotalk.com/api/v1/join" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json" --data '{"room":"test","roomPassword":"false","name":"mirotalksfu","audio":"false","video":"false","screen":"false","notify":"false","duration":"unlimited","token":{"username":"username","password":"password","presenter":"true", "expire":"1h"}}'
-# The response will give you a valid token for a meeting (default diabled)
-$ curl -X POST "http://localhost:3010/api/v1/token" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json" --data '{"username":"username","password":"password","presenter":"true", "expire":"1h"}'
-$ curl -X POST "https://sfu.mirotalk.com/api/v1/token" -H "authorization: mirotalksfu_default_secret" -H "Content-Type: application/json" --data '{"username":"username","password":"password","presenter":"true", "expire":"1h"}'
+curl -X GET "http://localhost:3010/api/v1/stats" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json"
+
+curl -X GET "https://sfu.mirotalk.com/api/v1/stats" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json"
+```
+
+### 2. Get Active Meetings
+
+```bash
+curl -X GET "http://localhost:3010/api/v1/meetings" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json"
+
+curl -X GET "https://sfu.mirotalk.com/api/v1/meetings" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json"
+```
+
+### 3. Create Meeting
+
+```bash
+curl -X POST "http://localhost:3010/api/v1/meeting" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json"
+
+curl -X POST "https://sfu.mirotalk.com/api/v1/meeting" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json"
+```
+
+### 4. Join Meeting (Basic)
+
+```bash
+curl -X POST "http://localhost:3010/api/v1/join" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json" \
+     --data '{"room":"test","roomPassword":false,"avatar":false,"name":"mirotalksfu","audio":false,"video":false,"screen":false,"notify":false,"duration":"unlimited"}'
+
+curl -X POST "https://sfu.mirotalk.com/api/v1/join" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json" \
+     --data '{"room":"test","roomPassword":false,"name":"mirotalksfu","avatar":false,"audio":false,"video":false,"screen":false,"notify":false,"duration":"unlimited"}'
+```
+
+### 5. Join Meeting with Token
+
+```bash
+curl -X POST "http://localhost:3010/api/v1/join" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json" \
+     --data '{"room":"test","roomPassword":false,"name":"mirotalksfu","audio":false,"video":false,"screen":false,"notify":false,"duration":"unlimited","token":{"username":"username","password":"password","presenter":true,"expire":"1h"}}'
+
+curl -X POST "https://sfu.mirotalk.com/api/v1/join" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json" \
+     --data '{"room":"test","roomPassword":false,"name":"mirotalksfu","audio":false,"video":false,"screen":false,"notify":false,"duration":"unlimited","token":{"username":"username","password":"password","presenter":true,"expire":"1h"}}'
+```
+
+### 6. Generate Token
+
+```bash
+curl -X POST "http://localhost:3010/api/v1/token" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json" \
+     --data '{"username":"username","password":"password","presenter":true,"expire":"1h"}'
+
+curl -X POST "https://sfu.mirotalk.com/api/v1/token" \
+     -H "authorization: mirotalksfu_default_secret" \
+     -H "Content-Type: application/json" \
+     --data '{"username":"username","password":"password","presenter":true,"expire":"1h"}'
 ```
 
 </details>
 
 <details open>
-<summary>Hetzner & Contabo</summary>
+<summary>Hetzner, Hostinger & Contabo</summary>
 
 <br/>
 
@@ -318,9 +382,15 @@ Use [my personal link](https://hetzner.cloud/?ref=XdRifCzCK3bn) to receive `€�
 
 ---
 
+[![Hostinger](public/advertisers/HostingerLogo.png)](https://hostinger.com/?REFERRALCODE=MIROTALK)
+
+Fast, reliable hosting with 24/7 support and great performance. Start today! [Check out Hostinger now](https://hostinger.com/?REFERRALCODE=MIROTALK)
+
+---
+
 [![Contabo](public/advertisers/ContaboLogo.png)](https://www.dpbolvw.net/click-101027391-14462707)
 
-Experience also top-tier German web hosting – dedicated servers, VPS, and web hosting at `unbeatable prices`. Reliable, secure, and backed by 24/7 support. [Explore now here](https://www.dpbolvw.net/click-101027391-14462707)
+Experience also top-tier German web hosting – dedicated servers, VPS, and web hosting at `unbeatable prices`. [Explore now here](https://www.dpbolvw.net/click-101027391-14462707)
 
 ---
 
@@ -397,7 +467,9 @@ Do you find MiroTalk SFU indispensable for your needs? Join us in supporting thi
 
 ---
 
-[![Contabo](public/advertisers/ContaboLogo.png)](https://www.dpbolvw.net/click-101027391-14462707)
+|                                                                                                |                                                                                                |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [![Hostinger](public/advertisers/Hostinger.png)](https://hostinger.com/?REFERRALCODE=MIROTALK) | [![Contabo](public/advertisers/Contabo.png)](https://www.dpbolvw.net/click-101027391-14462707) |
 
 ---
 

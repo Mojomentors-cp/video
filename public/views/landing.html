@@ -26,16 +26,12 @@
 
         <!-- https://ogp.me -->
 
-        <meta id="ogType" property="og:type" content="app-webrtc" />
-        <meta id="ogSiteName" property="og:site_name" content="MiroTalk SFU" />
-        <meta id="ogTitle" property="og:title" content="Click the link to make a call." />
-        <meta
-            id="ogDescription"
-            property="og:description"
-            content="MiroTalk SFU calling provides real-time video calls, messaging and screen sharing."
-        />
-        <meta id="ogImage" property="og:image" content="https://sfu.mirotalk.com/images/mirotalksfu.png" />
-        <meta id="ogUrl" property="og:url" content="https://sfu.mirotalk.com" />
+        <meta property="og:type" content="{{OG_TYPE}}" />
+        <meta property="og:site_name" content="{{OG_SITE_NAME}}" />
+        <meta property="og:title" content="{{OG_TITLE}}" />
+        <meta property="og:description" content="{{OG_DESCRIPTION}}" />
+        <meta property="og:image" content="{{OG_IMAGE}}" />
+        <meta property="og:url" content="{{OG_URL}}" />
 
         <!-- StyleSheet -->
 
@@ -122,7 +118,7 @@
                 <section class="cta section">
                     <div class="container">
                         <div class="cta-inner section-inner br-12">
-                            <h3 class="section-title mt-0">
+                            <h3 id="joinDescription" class="section-title mt-0">
                                 Pick a room name.<br />
                                 How about this one?
                             </h3>
@@ -141,7 +137,7 @@
                                     </div>
                                 </div>
                                 <div id="lastRoomContainer" class="last-room">
-                                    <span>Your recent room:</span>
+                                    <span id="joinLastLabel">Your recent room:</span>
                                     <a id="lastRoom"></a>
                                 </div>
                             </div>
@@ -310,6 +306,45 @@
                                 <div class="feature text-center is-revealing">
                                     <div class="feature-inner">
                                         <div class="feature-icon">
+                                            <img class="wh-200-150" src="../svg/aiAvatars.svg" alt="mirotalksfu-api" />
+                                        </div>
+                                        <h4 class="feature-title mt-24">AI Avatars</h4>
+                                        <p class="text-sm mb-0">
+                                            Engage with lifelike AI-powered avatars for a more interactive and dynamic
+                                            communication experience.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="feature text-center is-revealing">
+                                    <div class="feature-inner">
+                                        <div class="feature-icon">
+                                            <img class="wh-200-150" src="../svg/rtmp.svg" alt="mirotalksfu-api" />
+                                        </div>
+                                        <h4 class="feature-title mt-24">RTMP Streaming</h4>
+                                        <p class="text-sm mb-0">
+                                            Seamlessly stream your webcam, screen sharing, or external URLs via RTMP for
+                                            live events.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="feature text-center is-revealing">
+                                    <div class="feature-inner">
+                                        <div class="feature-icon">
+                                            <img
+                                                class="wh-200-150"
+                                                src="../svg/virtualBackgrounds.svg"
+                                                alt="mirotalksfu-api"
+                                            />
+                                        </div>
+                                        <h4 class="feature-title mt-24">Virtual Backgrounds</h4>
+                                        <p class="text-sm mb-0">
+                                            Enhance privacy and professionalism with customizable virtual backgrounds.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="feature text-center is-revealing">
+                                    <div class="feature-inner">
+                                        <div class="feature-icon">
                                             <img class="wh-200-150" src="../svg/api.svg" alt="mirotalksfu-api" />
                                         </div>
                                         <h4 class="feature-title mt-24">Rest API</h4>
@@ -406,6 +441,11 @@
                                 <li class="reveal-from-left c-pointer" data-reveal-delay="300">
                                     <a class="c-pointer" href="https://www.dpbolvw.net/click-101027391-14462707">
                                         <img src="../advertisers/ContaboLogo.png" alt="Powered by Contabo" />
+                                    </a>
+                                </li>
+                                <li class="reveal-from-left c-pointer" data-reveal-delay="450">
+                                    <a class="c-pointer" href="https://mediasoup.org">
+                                        <img src="../images/mediasoup.png" alt="Powered by Mediasoup" />
                                     </a>
                                 </li>
                             </ul>
@@ -523,6 +563,16 @@
                                                 class="clients-size-logo"
                                                 src="../advertisers/Contabo.png"
                                                 alt="Contabo"
+                                        /></a>
+                                    </div>
+                                </li>
+                                <li class="reveal-from-left" data-reveal-delay="300">
+                                    <div class="clients-logo">
+                                        <a href="https://hostinger.com/?REFERRALCODE=MIROTALK" target="_blank"
+                                            ><img
+                                                class="clients-size-logo"
+                                                src="../advertisers/Hostinger.png"
+                                                alt="Hostinger"
                                         /></a>
                                     </div>
                                 </li>
